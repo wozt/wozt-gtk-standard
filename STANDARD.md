@@ -56,6 +56,38 @@ For the top-bar controls, use `gtk_window_iconify()`, `gtk_window_maximize()`, `
 
 ---
 
+### Taskbar icon and desktop identity (mandatory)
+
+**The taskbar icon is separate from the system-tray/notification-area icon.** A correct tray icon does not guarantee that the desktop window displays the application's icon: without a stable desktop identity, the taskbar may show a generic blank-document icon.
+
+For **GTK3/X11**, give the main window a stable `WM_CLASS` before realization, match it to `StartupWMClass` in the `.desktop` file, and ensure the desktop filename and `Icon` key identify the same app. Load the real application icon with GTK (preferably as a multi-resolution icon list) so that the window exposes `_NET_WM_ICON`. Package the `.desktop` file and PNG/SVG icons in standard XDG/hicolor locations, including in the AppImage. This must also work when launching the development binary directly. Do **not** confuse this with `GtkStatusIcon`, and do not alter tray behavior to fix the taskbar.
+
+```c
+/* GTK3/X11: before the main window is realized. */
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+gtk_window_set_wmclass(GTK_WINDOW(window), "wupstreamd", "wupstreamd");
+G_GNUC_END_IGNORE_DEPRECATIONS
+
+/* Also set a real window icon / multi-resolution icon list. */
+gtk_window_set_icon_list(GTK_WINDOW(window), icons); /* GList* of GdkPixbuf* */
+```
+
+The deprecated `gtk_window_set_wmclass()` call is retained for the tested GTK3/X11 implementation; suppress **only this call's warning**, not deprecation warnings globally. Adapt the identifier and icon list for each application. On Wayland/GTK4, use the supported application-ID/desktop-file mechanism instead.
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=WUP Stream
+Exec=wupstreamd
+Icon=wupstreamd
+StartupWMClass=wupstreamd
+Terminal=false
+```
+
+**Acceptance test:** verify the icon in the **taskbar and Alt+Tab**, independently of the tray, both for development launches and the packaged AppImage. On X11, inspect the window with `xprop WM_CLASS _NET_WM_ICON`. A working tray icon with a blank taskbar icon is **not compliant**.
+
+---
+
 ## 2. Real resizing without native decorations
 
 **A borderless window must remain as resizable as a normal window.** `gtk_window_set_resizable(TRUE)` alone does not always provide interactive resize areas once the window manager's decorations have been removed.
