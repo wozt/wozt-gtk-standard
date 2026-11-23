@@ -206,7 +206,57 @@ The WOZT style favors an interface that is **information-dense without feeling c
 
 ### Density and readability
 
-WUP Stream historically uses very compact typography, including around 11 px in its CSS. **Do not mandate 11 px as a universal font size.** Adapt sizes to the display, scaling factor, and accessibility requirements; do not override the user's chosen font size without good reason. Compact must still mean readable.
+Use **WUP Stream's compact GTK sizing as the default desktop visual baseline**: **11 px** body text and **12 px** prominent labels, with tight, aligned controls. These are reference values for normal desktop scaling, not hard accessibility limits: honor the user's font preferences and HiDPI scaling. Compact must still mean readable.
+
+### Compact typography and UI sizing (WUP Stream reference)
+
+Use the **same compact visual density as `wupstreamd`** by default. The values
+below are taken from `wozt/wup-stream-server-linux/src/ui.c`, GTK3 CSS.
+
+| Element | Reference value |
+|---|---|
+| Body, labels and tooltips | **11 px** |
+| Application name and help headings | **12 px**, bold |
+| Buttons | **17 px minimum height**, `1px 6px` padding, **5 px** radius |
+| Icon buttons | **20 px minimum width**, `1px 3px` padding |
+| Minimize/maximize/close | **24 x 22 px minimum**, `1px` padding |
+| Text inputs | **17 px minimum height**, `1px 4px` padding, **4 px** radius |
+| Spinbutton input | **17 px minimum height**, `1px 3px` padding |
+| Spinbutton stepper | **14 px minimum width**, **17 px minimum height** |
+| Combo boxes | **17 px minimum height**, `0 4px` button padding |
+| Checkbox indicator | **14 x 14 px minimum**, **3 px** radius |
+| Section frames | **8 px** radius, `1px` margin, `2px` padding |
+| Menu items | `3px 7px` padding |
+| Tooltips | `4px 7px` label padding |
+
+**Implementation requirements:**
+- Apply these reference sizes to the **whole interface**, including dialog
+  controls, selectors and popups, rather than enlarging some sections with
+  stock GTK/libadwaita spacing.
+- Maintain consistent compact spacing, small margins and aligned controls.
+  The seven JSON themes change colors, **not** the UI density.
+- Prefer application-scoped GTK CSS. For GTK4/libadwaita use corresponding
+  supported styling; do not copy GTK3 CSS selectors without testing.
+- Preserve readability, keyboard navigation and usable pointer/touch targets.
+  Support increased font/UI scale and adapt layout breakpoints accordingly.
+- Test minimum, default and maximized sizes, all seven themes, and longer
+  translations; avoid clipping and horizontal scrollbars.
+- Reference geometry for WUP Stream itself is **960 x 703** initially and
+  **680 x 530** minimum; other applications must choose sizes fitting
+  their own content.
+
+**GTK3 example** (palette colors still come from theme JSON):
+
+```css
+.wup-settings * { font-size: 11px; }
+.wup-settings .wup-brand-title { font-size: 12px; font-weight: bold; }
+.wup-settings button { min-height: 17px; padding: 1px 6px; border-radius: 5px; }
+.wup-settings entry { min-height: 17px; padding: 1px 4px; border-radius: 4px; }
+.wup-settings frame { border-radius: 8px; margin: 1px; padding: 2px; }
+```
+
+These are **default reference metrics**, not a reason to override users'
+accessibility preferences.
 
 ### CSS and scope
 
@@ -465,6 +515,7 @@ When redesigning an existing application, follow this sequence **without rewriti
 - [ ] All seven JSON files are valid, and each palette has a stable ID.
 - [ ] Live theme switching and reloading work without losing application state.
 - [ ] Buttons, fields, sections, menus, popups, tooltips, and dialogs use consistent styling.
+- [ ] Font sizes, control geometry and spacing match the **compact WUP Stream metrics** in Section 5, with accessible scaling.
 - [ ] Hover, focus, active, checked, and disabled states are visible and have sufficient contrast.
 
 ### Localization
