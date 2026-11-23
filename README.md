@@ -1,19 +1,19 @@
 # WOZT GTK Standard
 
-**Un standard de conception pour créer et moderniser des interfaces GTK sous Linux**, issu du travail réalisé sur [WUP Stream](https://github.com/wozt/wup-stream-server-linux).
+**A design standard for building and modernizing GTK desktop interfaces on Linux**, based on the UI work carried out in [WUP Stream](https://github.com/wozt/wup-stream-server-linux).
 
-Il sert de référence aux développeurs et aux assistants IA (Codex, SWE-2, etc.) pour obtenir des applications visuellement cohérentes sans sacrifier leurs fonctionnalités.
+It gives developers and AI coding agents (Codex, SWE-2, and others) a shared reference for creating visually consistent applications without sacrificing existing features or performance.
 
-Le standard couvre notamment :
+The standard covers:
 
-- Une fenêtre sans barre de titre GTK native, avec icône et commandes intégrées, déplaçable et redimensionnable sur ses huit bords et coins.
-- Une interface compacte, responsive, privilégiant une page principale, tout en autorisant onglets et fenêtres secondaires si nécessaire.
-- **7 thèmes JSON** : Graphite, Light, Ocean, Emerald, Rose, Apple Lime et Steam Legacy.
-- Des traductions en **JSON**, modifiables à chaud, y compris pour les menus et les infobulles.
-- Un style visuel homogène et une distribution Linux en **AppImage x86_64**.
+- **Custom window chrome:** no native GTK title bar; integrated app icon and window controls, draggable and resizable from all four edges and four corners.
+- **Compact, responsive layouts:** a single main page where practical, with tabs and secondary windows allowed when useful.
+- **Seven built-in JSON themes:** Graphite, Light, Ocean, Emerald, Rose, Apple Lime, and Steam Legacy.
+- **JSON-based localization:** live language switching, including menus, tooltips, dialogs, and dynamically rendered content.
+- **Consistent visual design** and reproducible **Linux x86_64 AppImage** builds.
 
-## Utilisation
+## How to use it
 
-Lire **[standard.md](standard.md)** et demander à l'agent de développement de l'appliquer au projet concerné, en conservant ses fonctionnalités et ses performances.
+Read **[STANDARD.md](STANDARD.md)** and ask your coding agent to apply it to the target project while preserving its features, settings, and performance.
 
-Le dossier [`examples/`](examples/) fournit les thèmes, les fichiers de langues et un exemple de script de construction AppImage. Ces ressources sont des **références à adapter** : le dépôt n'est pas une bibliothèque GTK prête à intégrer telle quelle.
+The [`examples/`](examples/) directory contains theme palettes, language files, and a reference AppImage build script. These are **adaptable examples**, not a drop-in GTK library.
