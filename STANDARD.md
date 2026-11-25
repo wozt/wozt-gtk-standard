@@ -1,6 +1,6 @@
 # WOZT GTK Standard
 
-> **Version:** 1.1 — November 25, 2026  
+> **Version:** 1.2 — November 25, 2026  
 > **Purpose:** A reusable visual, usability, and technical standard for WOZT desktop interfaces.  
 > **Original reference:** [`wozt/wup-stream-server-linux`](https://github.com/wozt/wup-stream-server-linux), especially `src/ui.c`, `src/i18n.c`, `src/settings.c`, `data/themes/`, and `data/languages/`.  
 > **Status:** A specification for creating and redesigning interfaces; this repository is **not**, by itself, a ready-to-use GTK library.
@@ -145,6 +145,21 @@ Borderless window
 ```
 
 The content may scroll vertically when necessary, but the **top bar remains visible**. Do not use horizontal scrolling as a workaround for an overly wide layout.
+
+### WUP Stream section framing (mandatory)
+
+Use [WUP Stream](https://github.com/wozt/wup-stream-server-linux) as the visual reference for functional section boundaries, rather than a flat layout with headings alone. Its Connection, Video Source, Quality, Audio and Inputs groups illustrate the intended hierarchy.
+
+- Every major functional group on the dashboard must have a thin, visible, theme-colored frame enclosing its related controls. Prefer a single one-pixel outline and a subtly differentiated panel background.
+- Integrate the section title into the top edge of the frame (fieldset/legend appearance), rather than placing a detached heading above an unframed group. Use a compact bold accent-colored title and a small meaningful icon on its left, with an accessible text label and a reliable icon fallback.
+- Organize related controls in aligned rows and compact columns within each frame. Align neighboring frames, use consistent small gaps and padding, and avoid large empty decorative spaces.
+- Permit nested frames only for meaningful functional subgroups, such as controller input and keyboard/mouse mapping inside an Inputs section. Avoid repeated outlines around the same content or unnecessary frames around individual widgets; dropdowns retain exactly one visible control outline.
+- Keep routine functionality on the same main page. When width is reduced, rearrange or stack whole sections coherently; retain vertical scrolling as needed without horizontal overflow.
+- Use square corners (`border-radius: 0`) for all frames and controls. Adopt WUP Stream's section composition and hierarchy, not the rounded corners visible in older reference versions.
+- Derive frame, panel, title and icon colors from the active JSON palette. Verify clear section separation in all seven themes, at minimum and default window sizes, and with longer localized titles.
+- GTK3 may use `GtkFrame` with a custom label widget containing a symbolic icon and title. GTK4 may use an equivalent frame/label widget or a custom section container when necessary; the visible result must preserve the same integrated-title hierarchy. Do not rely on nested default GTK borders.
+
+**Acceptance test:** major functional sections are immediately distinguishable by their framed boundaries and integrated icon/title labels, including when the window is resized. A flat arrangement of colored headings without section boundaries is not compliant.
 
 ---
 
@@ -532,6 +547,7 @@ When redesigning an existing application, follow this sequence **without rewriti
 
 - [ ] All application-controlled corners are square; dropdowns have one visible frame only.
 - [ ] Routine controls share one compact page, divided into coherent functional sections.
+- [ ] Major sections use WUP Stream-style thin frames with integrated accent-colored icon/title labels, aligned compact spacing and meaningful nested subgroups only; all corners remain square.
 
 - [ ] All **seven** themes are present: Graphite, Light, Ocean, Emerald, Rose, Apple Lime, and Steam Legacy.
 - [ ] All seven JSON files are valid, and each palette has a stable ID.
@@ -613,6 +629,6 @@ The reference JSON files and packaging script are copied **unchanged from the WU
 
 ## 13. Short instruction for a coding agent/LLM
 
-> **Task:** Adapt this application's UI to the **WOZT GTK Standard** (`STANDARD.md`) and the JSON files in `examples/themes/` and `examples/languages/`. Audit the existing application first. Preserve all functionality, settings, and performance. Create a custom top bar without native GTK window decorations, including the app icon, window controls, and dragging. Implement resizing from all eight zones. Build a compact, responsive main page without horizontal scrolling. Integrate all seven default JSON themes, including Steam Legacy, with live switching. Add JSON-based localization and dynamic language changes, including popups and custom-drawn surfaces. Use square corners, single-frame dropdowns and a compact single-page layout divided into coherent functional sections. Keep secondary tabs and popups only for genuinely exceptional tasks. Build a reproducible x86_64 AppImage with bundled assets, complete GTK icon runtime and verified file permissions; gate release on actual icon rendering in the final extracted package. Test all interactions, live changes, and distribution. Do not mark the task as complete until the checks in Section 11 have passed.
+> **Task:** Adapt this application's UI to the **WOZT GTK Standard** (`STANDARD.md`) and the JSON files in `examples/themes/` and `examples/languages/`. Audit the existing application first. Preserve all functionality, settings, and performance. Create a custom top bar without native GTK window decorations, including the app icon, window controls, and dragging. Implement resizing from all eight zones. Build a compact, responsive main page without horizontal scrolling. Integrate all seven default JSON themes, including Steam Legacy, with live switching. Add JSON-based localization and dynamic language changes, including popups and custom-drawn surfaces. Use square corners, single-frame dropdowns and a compact single-page layout divided into coherent functional sections. Frame each major section using the WUP Stream visual reference: thin theme-colored outline, integrated accent-colored title and small icon, aligned compact spacing, and nested frames only for meaningful subgroups. Keep secondary tabs and popups only for genuinely exceptional tasks. Build a reproducible x86_64 AppImage with bundled assets, complete GTK icon runtime and verified file permissions; gate release on actual icon rendering in the final extracted package. Test all interactions, live changes, and distribution. Do not mark the task as complete until the checks in Section 11 have passed.
 
-**End of WOZT GTK Standard v1.1.**
+**End of WOZT GTK Standard v1.2.**
