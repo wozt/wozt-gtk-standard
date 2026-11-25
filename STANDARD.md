@@ -1,6 +1,6 @@
 # WOZT GTK Standard
 
-> **Version:** 1.0 — November 23, 2026  
+> **Version:** 1.1 — November 25, 2026  
 > **Purpose:** A reusable visual, usability, and technical standard for WOZT desktop interfaces.  
 > **Original reference:** [`wozt/wup-stream-server-linux`](https://github.com/wozt/wup-stream-server-linux), especially `src/ui.c`, `src/i18n.c`, `src/settings.c`, `data/themes/`, and `data/languages/`.  
 > **Status:** A specification for creating and redesigning interfaces; this repository is **not**, by itself, a ready-to-use GTK library.
@@ -121,7 +121,7 @@ gtk_window_begin_resize_drag(GTK_WINDOW(window), edge,
 
 The main page should work as a **dashboard**, not a sequence of settings screens that users must navigate.
 
-- Display common settings, status information, and primary controls **on one page** wherever practical.
+- Display all ordinary controls, settings and statuses **on the same compact main page**, divided into coherent, clearly named functional sections. Avoid navigation between pages for routine tasks.
 - Group content into **clearly named sections**, preferably with consistent icons and subtle borders.
 - Arrange sections in **balanced column pairs** when the available width allows.
 - Put the primary action in the top bar or another immediately recognizable location.
@@ -193,7 +193,7 @@ if (gtk_orientable_get_orientation(GTK_ORIENTABLE(row)) != mode)
 The WOZT style favors an interface that is **information-dense without feeling cramped**, readable, and contemporary:
 
 - **Solid or subtly differentiated backgrounds**, clearly separated panels, and thin borders.
-- **Slightly rounded corners** on sections, buttons, and fields; avoid excessive shadows, beveling, and purely decorative effects.
+- **Square corners (0 px radius)** on sections, buttons, fields, selectors, menus and popovers; avoid excessive shadows, beveling, and purely decorative effects.
 - **A consistent accent color** for headings, selected elements, focus, and primary actions; a separate warning/error color for failures and dangerous actions.
 - **Compact, aligned controls** on a coherent grid, with regular margins and functional spacing.
 - **GTK symbolic icons** where appropriate, with text fallbacks. Product-specific icons are welcome but must work with the active palette.
@@ -217,15 +217,15 @@ below are taken from `wozt/wup-stream-server-linux/src/ui.c`, GTK3 CSS.
 |---|---|
 | Body, labels and tooltips | **11 px** |
 | Application name and help headings | **12 px**, bold |
-| Buttons | **17 px minimum height**, `1px 6px` padding, **5 px** radius |
+| Buttons | **17 px minimum height**, `1px 6px` padding, **0 px** radius |
 | Icon buttons | **20 px minimum width**, `1px 3px` padding |
 | Minimize/maximize/close | **24 x 22 px minimum**, `1px` padding |
-| Text inputs | **17 px minimum height**, `1px 4px` padding, **4 px** radius |
+| Text inputs | **17 px minimum height**, `1px 4px` padding, **0 px** radius |
 | Spinbutton input | **17 px minimum height**, `1px 3px` padding |
 | Spinbutton stepper | **14 px minimum width**, **17 px minimum height** |
 | Combo boxes | **17 px minimum height**, `0 4px` button padding |
-| Checkbox indicator | **14 x 14 px minimum**, **3 px** radius |
-| Section frames | **8 px** radius, `1px` margin, `2px` padding |
+| Checkbox indicator | **14 x 14 px minimum**, **0 px** radius |
+| Section frames | **0 px** radius, `1px` margin, `2px` padding |
 | Menu items | `3px 7px` padding |
 | Tooltips | `4px 7px` label padding |
 
@@ -250,13 +250,20 @@ below are taken from `wozt/wup-stream-server-linux/src/ui.c`, GTK3 CSS.
 ```css
 .wup-settings * { font-size: 11px; }
 .wup-settings .wup-brand-title { font-size: 12px; font-weight: bold; }
-.wup-settings button { min-height: 17px; padding: 1px 6px; border-radius: 5px; }
-.wup-settings entry { min-height: 17px; padding: 1px 4px; border-radius: 4px; }
-.wup-settings frame { border-radius: 8px; margin: 1px; padding: 2px; }
+.wup-settings button { min-height: 17px; padding: 1px 6px; border-radius: 0; }
+.wup-settings entry { min-height: 17px; padding: 1px 4px; border-radius: 0; }
+.wup-settings frame { border-radius: 0; margin: 1px; padding: 2px; }
 ```
 
 These are **default reference metrics**, not a reason to override users'
 accessibility preferences.
+
+### Square corners and single-frame selectors (mandatory)
+
+- Keep the entire application compact: tight spacing, small margins, aligned controls and no wasted space. Preserve readability and accessibility.
+- Use `border-radius: 0` on application-controlled panels, buttons, entries, selectors, popovers and menus in every theme; no rounded corners.
+- Drop-down lists must have exactly one visible outer frame. Remove redundant borders and shadows from nested GTK nodes (GTK3 combo boxes and GTK4 drop-downs), without removing focus, hover or disabled indications. Keep popup list boundaries and selection states clear.
+- Keep ordinary controls on the same page, grouped by function into coherent sections; reserve secondary dialogs or tabs for exceptional or genuinely complex tasks. Allow responsive stacking and vertical scrolling rather than hiding routine controls.
 
 ### CSS and scope
 
@@ -436,6 +443,18 @@ LINUXDEPLOY="$PWD/tools/linuxdeploy-x86_64.AppImage" \
 ./dist/wupstreamd-x86_64.AppImage
 ```
 
+### Self-contained GTK icon runtime (mandatory)
+
+The tested reference is [pcble2gamepad](https://github.com/wozt/pcble2gamepad): its native build displayed icons correctly while the GitHub-built AppImage showed missing-image placeholders. Bundling only the application icon or the SVG loader is not sufficient.
+
+- Bundle the complete Adwaita and Hicolor icon themes, including index.theme, symbolic icons and application icons. Preserve application assets when merging themes.
+- Bundle all required GDK-Pixbuf loader modules, including SVG support, and their transitive non-system shared-library dependencies. Provision build dependencies explicitly in CI; do not rely on the host icon theme or loader cache.
+- Generate a relocatable loader cache and resolve its paths at runtime against the actual AppDir. Set GDK_PIXBUF_MODULE_FILE, GDK_PIXBUF_MODULEDIR, XDG_DATA_DIRS and runtime library paths as appropriate before GTK initializes. Never write into the mounted AppImage; use a private temporary cache and clean it up.
+- Configure GTK to find the embedded icon directories and use the bundled theme in AppImage mode, while preserving normal native-build behavior. Avoid stale icon caches and absolute build-machine paths.
+- Test the final extracted AppImage under a virtual display (e.g. Xvfb) with isolated icon/data settings. Use a hardware-safe diagnostic mode or dedicated GTK test executable that exercises the same runtime environment. Verify actual image decoding/rendering, not just file existence or icon-name lookup. Include application identity, dropdown arrows, refresh, minimize, maximize/restore and close icons.
+- Fail CI and block release if required resources, loader dependencies or rendering checks fail. Publish only the exact tested AppImage and its checksum.
+- Reference implementation: [build script](https://github.com/wozt/pcble2gamepad/blob/main/tools/build-appimage.sh), [AppRun](https://github.com/wozt/pcble2gamepad/blob/main/tools/appimage-apprun.sh), [CI](https://github.com/wozt/pcble2gamepad/blob/main/.github/workflows/ci.yml). Adapt to GTK3/GTK4 and the target distribution; do not bundle privileged helpers as user-writable root commands.
+
 ### AppImage release tests
 
 - [ ] The script builds the **current source version** and fails when compilation fails.
@@ -454,7 +473,7 @@ An application claiming WOZT GTK Standard compliance while shipping on Linux **w
 
 Every application implementing this standard **must include an app-specific GitHub Actions CI/CD workflow** (or an equivalent documented CI/CD system); this documentation repository is only the standard, not a replacement for each application's build workflow. On each push to `main`, the pipeline must build from the pushed commit, treat new compiler warnings as failures where practical, run automated **hardware-safe** tests, and package a Linux x86_64 AppImage with the proper desktop file, icon, permissions, themes, translations, and runtime assets. Pull requests may run build and tests but **must not publish releases**. Tests that can change PipeWire routing, access HID hardware, disrupt user audio, or terminate running applications must never run automatically on shared CI runners; keep these diagnostics behind an explicit, separate opt-in on a suitable test machine.
 
-The AppImage packaging job must depend on successful CI checks. Validate the package contents without launching a hardware-dependent application, upload the resulting AppImage as a downloadable build artifact, and keep the deployment step separate. **Only after all checks and packaging pass**, pushes to `main` may automatically create a GitHub Release with the exact tested AppImage, a SHA-256 checksum, and release notes. The release job alone may receive `contents: write`; build and test jobs should use read-only permissions. Never publish an artifact from a failed build, and never assume that successful packaging replaces real runtime testing on supported distributions.
+The AppImage packaging job must depend on successful CI checks. Validate the package contents and run the hardware-safe GTK rendering test against the final extracted AppImage without launching hardware-dependent functionality, upload the resulting AppImage as a downloadable build artifact, and keep the deployment step separate. **Only after all checks and packaging pass**, pushes to `main` may automatically create a GitHub Release with the exact tested AppImage, a SHA-256 checksum, and release notes. The release job alone may receive `contents: write`; build and test jobs should use read-only permissions. Never publish an artifact from a failed build, and never assume that successful packaging replaces real runtime testing on supported distributions.
 
 Use **four-component incremental release tags** for the default automatic minor rebuild series: `v1.0.0.0`, `v1.0.0.1`, `v1.0.0.2`, and so on. Treat the existing Git tags/releases as the version source of truth; initialize at `v1.0.0.0` if absent, otherwise increment only the final component of the highest matching tag. The four-component scheme is a project convention, **not standard three-component SemVer**. Reserve changes to the first three components for deliberate major/minor/patch version decisions. Serialize publishing with GitHub Actions concurrency, re-check the latest remote tags immediately before creating a release, never move or overwrite an existing tag, and make reruns idempotent so the same commit is not published twice. Do not create commits merely to increment the version, as that can trigger an infinite build loop.
 
@@ -511,6 +530,9 @@ When redesigning an existing application, follow this sequence **without rewriti
 
 ### Appearance
 
+- [ ] All application-controlled corners are square; dropdowns have one visible frame only.
+- [ ] Routine controls share one compact page, divided into coherent functional sections.
+
 - [ ] All **seven** themes are present: Graphite, Light, Ocean, Emerald, Rose, Apple Lime, and Steam Legacy.
 - [ ] All seven JSON files are valid, and each palette has a stable ID.
 - [ ] Live theme switching and reloading work without losing application state.
@@ -527,6 +549,9 @@ When redesigning an existing application, follow this sequence **without rewriti
 - [ ] Language resources are included in installable distributions.
 
 ### Linux AppImage
+
+- [ ] Complete GTK icon themes, loaders and required libraries are bundled and relocatable.
+- [ ] Actual icon rendering is tested in the final extracted AppImage; failure blocks release.
 
 - [ ] A maintained, reproducible `tools/build-appimage.sh` script is present.
 - [ ] The x86_64 AppImage is built from current sources and provided as a release artifact.
@@ -588,6 +613,6 @@ The reference JSON files and packaging script are copied **unchanged from the WU
 
 ## 13. Short instruction for a coding agent/LLM
 
-> **Task:** Adapt this application's UI to the **WOZT GTK Standard** (`STANDARD.md`) and the JSON files in `examples/themes/` and `examples/languages/`. Audit the existing application first. Preserve all functionality, settings, and performance. Create a custom top bar without native GTK window decorations, including the app icon, window controls, and dragging. Implement resizing from all eight zones. Build a compact, responsive main page without horizontal scrolling. Integrate all seven default JSON themes, including Steam Legacy, with live switching. Add JSON-based localization and dynamic language changes, including popups and custom-drawn surfaces. Keep genuinely useful tabs and popups. Build a reproducible x86_64 AppImage with bundled assets and verified file permissions. Test all interactions, live changes, and distribution. Do not mark the task as complete until the checks in Section 11 have passed.
+> **Task:** Adapt this application's UI to the **WOZT GTK Standard** (`STANDARD.md`) and the JSON files in `examples/themes/` and `examples/languages/`. Audit the existing application first. Preserve all functionality, settings, and performance. Create a custom top bar without native GTK window decorations, including the app icon, window controls, and dragging. Implement resizing from all eight zones. Build a compact, responsive main page without horizontal scrolling. Integrate all seven default JSON themes, including Steam Legacy, with live switching. Add JSON-based localization and dynamic language changes, including popups and custom-drawn surfaces. Use square corners, single-frame dropdowns and a compact single-page layout divided into coherent functional sections. Keep secondary tabs and popups only for genuinely exceptional tasks. Build a reproducible x86_64 AppImage with bundled assets, complete GTK icon runtime and verified file permissions; gate release on actual icon rendering in the final extracted package. Test all interactions, live changes, and distribution. Do not mark the task as complete until the checks in Section 11 have passed.
 
-**End of WOZT GTK Standard v1.0.**
+**End of WOZT GTK Standard v1.1.**
