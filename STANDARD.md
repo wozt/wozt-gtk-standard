@@ -1,9 +1,11 @@
 # WOZT GTK Standard
 
-> **Version:** 1.2 — November 25, 2026  
+> **Version:** 1.3 — November 25, 2026  
 > **Purpose:** A reusable visual, usability, and technical standard for WOZT desktop interfaces.  
 > **Original reference:** [`wozt/wup-stream-server-linux`](https://github.com/wozt/wup-stream-server-linux), especially `src/ui.c`, `src/i18n.c`, `src/settings.c`, `data/themes/`, and `data/languages/`.  
 > **Status:** A specification for creating and redesigning interfaces; this repository is **not**, by itself, a ready-to-use GTK library.
+
+> **Primary reference for dashboard layout and density (v1.3):** [Capture2Cloud](https://github.com/wozt/capture2cloud/tree/35e0d43cfb0d7bbaa672005756543962ee7b4241). Section 14 takes precedence for this profile where older reference measurements differ. All existing theme, icon, accessibility, AppImage and CI/CD obligations remain in force.
 
 ## 0. General principle
 
@@ -631,4 +633,42 @@ The reference JSON files and packaging script are copied **unchanged from the WU
 
 > **Task:** Adapt this application's UI to the **WOZT GTK Standard** (`STANDARD.md`) and the JSON files in `examples/themes/` and `examples/languages/`. Audit the existing application first. Preserve all functionality, settings, and performance. Create a custom top bar without native GTK window decorations, including the app icon, window controls, and dragging. Implement resizing from all eight zones. Build a compact, responsive main page without horizontal scrolling. Integrate all seven default JSON themes, including Steam Legacy, with live switching. Add JSON-based localization and dynamic language changes, including popups and custom-drawn surfaces. Use square corners, single-frame dropdowns and a compact single-page layout divided into coherent functional sections. Frame each major section using the WUP Stream visual reference: thin theme-colored outline, integrated accent-colored title and small icon, aligned compact spacing, and nested frames only for meaningful subgroups. Keep secondary tabs and popups only for genuinely exceptional tasks. Build a reproducible x86_64 AppImage with bundled assets, complete GTK icon runtime and verified file permissions; gate release on actual icon rendering in the final extracted package. Test all interactions, live changes, and distribution. Do not mark the task as complete until the checks in Section 11 have passed.
 
-**End of WOZT GTK Standard v1.2.**
+## 14. Capture2Cloud dashboard profile (v1.3, preferred)
+
+Reference: [pinned Capture2Cloud source](https://github.com/wozt/capture2cloud/tree/35e0d43cfb0d7bbaa672005756543962ee7b4241), especially `server/gtk_shell.c`, `server/wozt_ui_standard.c`, `tests/c/test_gtk_layout.c`, `data/` and `tools/check-wozt-translations.py`. The runnable starting point is `examples/capture2cloud-skeleton/`. Adapt to the target app; never transplant streaming, controller or network logic.
+
+### 14.1 Window and functional grouping
+
+- Reference settings client-area default: **880 × 806 logical pixels**; reference geometry hints **600 × 420**. Do not include compositor shadows in these measurements. These are a baseline, not a universal enforced size; use the smallest comfortable default for the actual application. Verify first launch, shrink, maximize, restore and continuous resizing.
+- Fixed compact header and fixed bottom status/version bar; only the central dashboard scrolls. Keep all eight resize zones, drag/double-click, desktop identity, theme/language selectors and refresh. Preserve application-specific close semantics.
+- Functional frames with integrated icon/title and contextual help; compact margins, 5–6 px gaps between panels, typically 1–3 px between controls, no redundant headings, blank rows or spacer widgets. Keep explanations accessible via tooltips instead of permanently consuming rows.
+- Use independent logical horizontal groups rather than a single homogeneous grid: (1) Overview + Clients + compact Monitor/Capture stack; (2) Controller output + Local input; (3) Reset method + Maintenance. Adapt these semantic groups to the application. Do not impose Capture2Cloud-specific names or functionality on unrelated software.
+- Overview uses concise live statuses; Clients may contain a compact notebook with independently scrolling pages for genuinely distinct clients. Avoid global navigation for ordinary settings. Preserve widgets, signals, selected tabs and state while reparenting.
+
+### 14.2 Bidirectional responsive layout
+
+- Compute horizontal breakpoints from actual GTK preferred widths, spacing and margins; use stable application-specific fallback budgets only where needed. Reparent existing frames only when the packing signature changes. Wrap whole sections in semantic order. The last eligible frame absorbs spare horizontal width; in the three-slot top group Clients absorbs spare width while the utility stack remains naturally narrow.
+- Keep genuine controller-output internal columns intact where they remain usable; Local input uses one compact column. Never widen sliders or internal fields merely because the window gets wider. At extreme widths prefer accessible overflow to clipping: vertical scrolling is normal; temporary horizontal scrolling is allowed only as a last-resort safety fallback for unavoidable minimum widths (supersedes the absolute wording in older sections). No horizontal scrollbar at the intended default size.
+- For utility rows, use three homogeneous horizontal tracks: Reset occupies two, Maintenance one. Pair only when real minimum widths fit the ratio; otherwise stack. Optional Reset placement in the top-right stack is permitted only if its complete natural height fits without making the top row taller.
+- **Vertical responsiveness is mandatory:** when viewport height exceeds the sum of natural row heights plus gaps, allocate surplus proportionally to each visible row's natural height. For surplus S, cumulative natural height C and total T, each row receives floor(S*C_after/T) minus floor(S*C_before/T). This conserves every pixel. Measure natural heights at actual allocated widths; never use previous expanded heights as minimum size requests. If content does not fit, retain natural/minimum layout and scroll. Recalculate on every allocation, including shrink and horizontal reflow; do not recreate widgets or queue recursive resize loops.
+- Adjacent section borders fill the allocated row height. Within a stacked utility column, Monitor may absorb extra height while Capture remains compact; keep optional Reset compact. Controls stay top-aligned and retain compact geometry; only frame/container space expands. No dark unused strip above the footer. Test narrow, default, wide, tall, maximized and shrink-back layouts, including all languages.
+
+### 14.3 Compact control metrics and alignment
+
+- Capture2Cloud profile: 11 px body/subsection text, 12 px bold titles, 19 px minimum button/input height (CSS content size), button padding 0 5 px, input padding 0 4 px; 20 × 19 px minimum window control content size; 14 × 14 px check indicator. These override the older WUP Stream reference metrics for this profile, with accessibility scaling allowed. Square corners, one outline per control.
+- Use a shared thin slider style (`wozt-calibration-scale`): reference size request **116 × 15 px**, zero vertical margins, **3 px trough**, **12 × 12 px thumb core** with 1 px border; keep value text legible and preserve keyboard input, actual range, units and signals. Apply consistently to calibration, local input, monitor and bitrate sliders. A size request is a GTK minimum, not an absolute maximum; verify natural sizes and avoid unwanted expansion.
+- Standard labels and fields align on a compact grid. Long labels/statuses use single-line ellipsis with full tooltip where needed; do not silently truncate essential actions or values. Compact selectors (Wake method, target console) use a 100 px reference request versus 200 px ordinary selectors and a bounded text renderer, retaining full selected value in a tooltip. Preserve readable hardware selectors.
+- Reset layout: heading and Wake method selector share one row; no redundant “method” label. Independent left/right grids, left target controls and right Bluetooth adapter/tools/beacon/status; top-align, eliminate blank leading rows; wrap at measured widths and preserve script-mode behavior. Maintenance actions use compact aligned rows, consistent spacing and clear accessible labels.
+
+### 14.4 Localization completeness and regression gates
+
+- Keep English canonical source keys and all nine UTF-8 catalogs (fr, de, it, es, pt, ru, ja, ko, zh-cn); English fallback. Never translate internal IDs, addresses, paths, protocol identifiers, product names or format tokens into invalid values. Explicitly document intentional invariants.
+- Cover headings, labels, buttons, checks, tabs, combo choices, tooltips, placeholders, dialogs, tray menus, errors, live statuses and custom-drawn strings. Use stable source keys for live updates and language switching; never translate already translated text or mutate persisted model IDs. Localize dynamic format templates before formatting; preserve placeholder types/order or use positional placeholders. Keep arbitrary hardware data unchanged.
+- Maintain a source inventory tool, based on the pinned `tools/check-wozt-translations.py`, that reports source locations, per-language missing entries and dynamic arguments needing review. Run strict literal coverage in CI; review dynamic expressions separately and test language switching at runtime. A 100% literal report alone is not proof of full runtime localization. Audit callbacks, late-created menus/dialogs and renderer-only strings. Never fill unknown translations with English just to pass a gate.
+- Test real GTK layout under Xvfb, actual allocations and pixel conservation (grow/shrink), control dimensions, responsive breakpoints with actual measured widths, frame alignment, no duplicated widgets, all themes and locales, and live state preservation. Do not hide failures by loosening unrelated assertions. Separate hardware-safe CI from hardware tests; retain all Section 9 AppImage/release requirements.
+
+### 14.5 Reference skeleton and migration
+
+The example contains a small independent GTK3 application using the pinned Capture2Cloud theme/localization engine and vertical allocation/resize helpers. It demonstrates three groups, measured width reflow, a 2/3 utility row, compact controls, a notebook, fixed header/footer and live themes/languages. It is a starting point, not a claim that an arbitrary target app or its packaging is compliant. Replace demo controls with real callbacks; verify app-specific persistence, dialogs, all dynamic text, accessibility, desktop icon integration, packaging and CI/CD before shipping. Existing requirements in Sections 0–13 continue to apply except for the explicit profile overrides above.
+
+**End of WOZT GTK Standard v1.3.**
